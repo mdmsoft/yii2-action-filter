@@ -14,26 +14,34 @@ use yii\base\DynamicModel;
 class VerifyController extends \yii\web\Controller
 {
     public $defaultAction = 'verify';
-    public $validationCallback;
-    public $returnUrlParam;
-    public $validationKey;
 
-    public function actionVerify($for)
+    /**
+     * @var EnterCode 
+     */
+    public $filter;
+
+    public function actionVerify()
     {
-        $key = md5(serialize([$this->module->uniqueId, $for]));
+        $session = Yii::$app->session;
+        $urlKey = $this->filter->buildKey($this->filter->returnUrlParam);
+        $urls = $session->get($urlKey);
+        if (is_array($urls) && isset($urls[0], $urls[1])) {
+            $route = $urls[0];
+            $returnUrl = $urls[1];
+        } else {
+            throw new \yii\base\InvalidCallException();
+        }
+        $key = $this->filter->buildKey($route);
         $field = 'f' . substr($key, 0, 10);
         $model = new DynamicModel([$field]);
         $model->addRule($field, 'required');
 
         if ($model->load(Yii::$app->getRequest()->post()) && $model->validate()) {
-            if (call_user_func($this->validationCallback, $model->$field, $key)) {
-                $verify = Yii::$app->security->hashData(time(), $this->validationKey);
-                $session = Yii::$app->session;
-                $session->set($key, $verify);
-                $returnUrl = $session->get(md5(serialize([$this->returnUrlParam, $for])));
+            if ($this->filter->isValid($model->$field, $route)) {
+                $this->filter->setValid($route);
                 return Yii::$app->getResponse()->redirect($returnUrl);
             } else {
-                $model->addError($field, 'Code invalid');
+                $model->addError($field, $this->filter->message);
             }
         }
         return $this->render('verify', ['model' => $model, 'field' => $field]);

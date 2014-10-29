@@ -20,30 +20,33 @@ class EnterCode extends \yii\base\ActionFilter
     public $validationCallback;
     public $timeout = 300;
     public $returnUrlParam = '__return_url';
-    public $validationKey = 'x';
+    public $validationKey;
+    public $renewSession = true;
+    public $message;
 
     /**
-    * @inheritdoc
-    */
+     * @inheritdoc
+     */
     public function init()
     {
         if ($this->validationCallback === null) {
             throw new InvalidConfigException('$validationCallback must be set');
         }
+        if($this->message === null){
+            $this->message = "Code invalid";
+        }
         $this->except[] = $this->verificationRoute . '/verify';
     }
 
     /**
-    * @inheritdoc
-    */
+     * @inheritdoc
+     */
     public function attach($owner)
     {
         if ($owner instanceof Module) {
             $owner->controllerMap[$this->verificationRoute] = [
                 'class' => __NAMESPACE__ . '\VerifyController',
-                'validationCallback' => $this->validationCallback,
-                'returnUrlParam' => $this->returnUrlParam,
-                'validationKey' => $this->validationKey,
+                'filter' => $this,
             ];
             parent::attach($owner);
         } else {
@@ -52,26 +55,51 @@ class EnterCode extends \yii\base\ActionFilter
     }
 
     /**
-    * @inheritdoc
-    */
+     * @inheritdoc
+     */
     public function beforeAction($action)
     {
-        $uid = $action->uniqueId;
+        $route = $action->uniqueId;
 
-        $key = md5(serialize([$this->owner->uniqueId, $uid]));
-        $verify = Yii::$app->session->get($key);
-        if (is_string($verify) && ($verify = Yii::$app->security->validateData($verify, $this->validationKey)) !== false && $verify > time() - $this->timeout) {
-            return true;
-        } else {
-            $this->verifyRequired($uid);
+        $verify = Yii::$app->session->get($this->buildKey($route));
+        if (!empty($this->validationKey)) {
+            $verify = is_string($verify) ? Yii::$app->security->validateData($verify, $this->validationKey) : false;
         }
+        if ($verify < time() - $this->timeout) {
+            return $this->verifyRequired($route);
+        }
+
+        if ($this->renewSession) {
+            $this->setValid($route);
+        }
+        return true;
     }
 
-    protected function verifyRequired($for)
+    protected function verifyRequired($route)
     {
         $request = Yii::$app->getRequest();
-        Yii::$app->session->set(md5(serialize([$this->returnUrlParam, $for])), $request->getUrl());
-        $mid = $this->owner->uniqueId . '/' . $this->verificationRoute;
-        return Yii::$app->getResponse()->redirect([$mid, 'for' => $for]);
+        Yii::$app->session->set($this->buildKey($this->returnUrlParam), [$route, $request->getUrl()]);
+        $id = $this->owner->uniqueId . '/' . $this->verificationRoute;
+        return Yii::$app->getResponse()->redirect([$id]);
+    }
+
+    public function buildKey($key)
+    {
+        return md5(serialize([__CLASS__, $this->owner->uniqueId, $key]));
+    }
+
+    public function isValid($code, $route)
+    {
+        return call_user_func($this->validationCallback, $code, $route);
+    }
+
+    public function setValid($route)
+    {
+        if (!empty($this->validationKey)) {
+            $verify = Yii::$app->security->hashData(time(), $this->validationKey);
+        } else {
+            $verify = time();
+        }
+        Yii::$app->session->set($this->buildKey($route), $verify);
     }
 }
