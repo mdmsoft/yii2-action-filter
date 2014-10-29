@@ -1,0 +1,25 @@
+{
+	"name": "mdmsoft/yii2-action-filter",
+	"description": "Force entry code to enter",
+	"keywords": ["yii", "action", "filter"],
+	"type": "yii2-extension",
+	"license": "BSD-3-Clause",
+	"support": {
+		"issues": "https://github.com/mdmsoft/yii2-action-filter/issues",
+		"source": "https://github.com/mdmsoft/yii2-action-filter"
+	},
+	"authors": [
+		{
+			"name": "Misbahul Munir",
+			"email": "misbahuldmunir@gmail.com"
+		}
+	],
+	"require": {
+		"yiisoft/yii2": "*"
+	},
+	"autoload": {
+		"psr-4": {
+			"mdm\\filter\\": ""
+		}
+	}
+}
