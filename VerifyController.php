@@ -13,7 +13,15 @@ use yii\base\DynamicModel;
  */
 class VerifyController extends \yii\web\Controller
 {
+    /**
+     * @inheritdoc
+     */
     public $defaultAction = 'verify';
+
+    /**
+     * @var string file to be rendered
+     */
+    public $viewFile = '@mdm/filter/views/verify.php';
 
     /**
      * @var EnterCode 
@@ -23,7 +31,7 @@ class VerifyController extends \yii\web\Controller
     public function actionVerify()
     {
         $session = Yii::$app->session;
-        $urlKey = $this->filter->buildKey($this->filter->returnUrlParam);
+        $urlKey = $this->filter->buildKey('_url');
         $urls = $session->get($urlKey);
         if (is_array($urls) && isset($urls[0], $urls[1])) {
             $route = $urls[0];
@@ -44,14 +52,6 @@ class VerifyController extends \yii\web\Controller
                 $model->addError($field, $this->filter->message);
             }
         }
-        return $this->render('verify', ['model' => $model, 'field' => $field]);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getViewPath()
-    {
-        return __DIR__ . '/views';
+        return $this->render($this->viewFile, ['model' => $model, 'field' => $field]);
     }
 }

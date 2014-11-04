@@ -32,7 +32,7 @@ to the require section of your `composer.json` file.
 Usage
 -----
 
-After instalation done. Add to your config
+After instalation done. Attach filter to Module or Application
 
 ```php
     ...
@@ -49,4 +49,13 @@ After instalation done. Add to your config
 
 ```
 
-You can attach filter to application or module.
+You can cutomize view of verify controler by setting property `viewFile`
+
+```php
+    ...
+    'as access' => [
+        'class' => 'mdm\filter\EnterCode',
+        'viewFile' => '@your/views/verify.php',
+        ...
+
+```
