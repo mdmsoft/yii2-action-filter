@@ -11,7 +11,7 @@ The preferred way to install this extension is through [composer](http://getcomp
 Either run
 
 ```
-php composer.phar require mdmsoft/yii2-action-filter "*"
+php composer.phar require mdmsoft/yii2-action-filter "~1.0"
 ```
 
 for dev-master
@@ -23,7 +23,7 @@ php composer.phar require mdmsoft/yii2-action-filter "dev-master"
 or add
 
 ```
-"mdmsoft/yii2-action-filter": "*"
+"mdmsoft/yii2-action-filter": "~1.0"
 ```
 
 to the require section of your `composer.json` file.
@@ -35,7 +35,8 @@ Usage
 After instalation done. Attach filter to Module or Application
 
 ```php
-    ...
+$config['modules']['gii'] = [
+    'class' => 'yii\gii\Module',    
     'as access' => [
         'class' => 'mdm\filter\EnterCode',
         'timeout' => 600, // default 300
@@ -46,7 +47,7 @@ After instalation done. Attach filter to Module or Application
             'default/view', // actions
         ]
     ],
-
+]
 ```
 
 You can cutomize view of verify controler by setting property `viewFile`
